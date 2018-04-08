@@ -8,7 +8,6 @@ int trigPin = A0;
 int echoPin = A1;
 
 //motion sensor pins
-int motionPin = A4;
 int motionPin = D4;
 int ledPin = D3;
 
