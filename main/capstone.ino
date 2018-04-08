@@ -51,11 +51,11 @@ void loop(){
     //calculate the distance based on the time it took to get the echo
     //https://www.tindie.com/products/upgradeindustries/hc-sr05--hy-srf05-precision-ultrasonic-sensor/
     //Distance (in cm) = (elapsed time * sound velocity (340 m/s)) / 100 / 2 ~=
-    distance = (duration/2) * 0.0343
+    distance = (duration/2) * 0.0343;
     if (distance >= 400 || distance <=2) {
        Serial.println("Out of Range");
        distance = -1;
-   };
+   }
 
     return (distance);
   }
