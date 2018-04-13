@@ -9,12 +9,12 @@ int echoPin = A1;
 
 //motion sensor pins
 int motionPin = D4;
-int ledPin = D3;
+int ledPin = D7;
 
 //For this file
-int basicDelay = 500;
+int basicDelay = 150;
 bool activeMotion = false;
-char pirState = LOW; 
+char pirState = LOW;
 
 void setup() {
     //Generic setup
@@ -35,37 +35,34 @@ void loop(){
     distance = DistanceCheck(trigPin, echoPin);
     bool motion;
     motion = MotionCheck(motionPin, ledPin);
-    
-    //char val = digitalRead(motionPin);  // read input value
-    //val = analogRead(inputPin);  // read input value
-    //Serial.println(val);
-    
-    //=================================================================
-    // The below code is a LED on/off code just by the status of the PIR sensor. We have to write our own logic to combine both the sensor data.
-    if (motion) { 
-        // check if the input is HIGH
-        digitalWrite(ledPin, HIGH);  // turn LED ON
-        if (pirState == LOW) {
-            // we have just turned on
-            Serial.println("Motion detected!");
-            // We only want to print on the output change, not state
-            pirState = HIGH;
-        }
-    } 
-    else {
-        digitalWrite(ledPin, LOW); // turn LED OFF
-        if (pirState == HIGH){
-            // we have just turned of
-            Serial.println("Motion ended!");
-            // We only want to print on the output change, not state
-            pirState = LOW;
-        }
-    }  
-    //=================================================================
-    Serial.println(distance);
-    //Serial.println("Motion Detected:" + String(motion));
 
+    evaluate(distance, motion);
     delay(basicDelay);
+}
+
+void evaluate(long distance, bool motion){
+  Serial.println(distance);
+
+  if (motion) {
+      // check if the input is HIGH
+      digitalWrite(ledPin, HIGH);  // turn LED ON
+      if (pirState == LOW) {
+          // we have just turned on
+          Serial.println("Motion detected!");
+          // We only want to print on the output change, not state
+          pirState = HIGH;
+      }
+  }
+  else {
+      digitalWrite(ledPin, LOW); // turn LED OFF
+      if (pirState == HIGH){
+          // we have just turned of
+          Serial.println("Motion ended!");
+          // We only want to print on the output change, not state
+          pirState = LOW;
+      }
+  }
+
 }
 
 long DistanceCheck(int trigPin, int echoPin){
@@ -81,9 +78,8 @@ long DistanceCheck(int trigPin, int echoPin){
     //https://www.tindie.com/products/upgradeindustries/hc-sr05--hy-srf05-precision-ultrasonic-sensor/
     //Distance (in cm) = (elapsed time * sound velocity (340 m/s)) / 100 / 2 ~=
     distance = (duration/2) * 0.0343;
-    if (distance >= 400 || distance <=2) {
-       Serial.println("Out of Range");
-       distance = -1;
+    if (distance >= 500 || distance <=0) {
+      distance = -1;
     }
 
     return (distance);
