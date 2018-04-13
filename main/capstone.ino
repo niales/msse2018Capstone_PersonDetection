@@ -58,6 +58,7 @@ void loop(){
     bool motion;
     motion = MotionCheck(motionPin, ledPin);
 
+    Serial.println("Low: " + String(lowThreshDistance) + " | High: " + String(highThreshDistance)+" | Dist: " + String(distance) + " | RoomState: " + String(roomState));
 
     if(calibrationMode){
       calibrate(distance);
@@ -102,17 +103,17 @@ void calibrate(int distance){
 }
 
 void evaluate(long distance, bool motion){
-  Serial.println(String(lowThreshDistance) + "|" + String(highThreshDistance)+"|" + String(distance));
+
   bool distanceTriggered = distanceTrip(distance);
 
-  if(roomState == 0){ //currenlty empty
-    if(distanceTrip){
+  if(roomState == 0){ //currently empty
+    if(distanceTriggered){
       roomState = 1;
       Serial.println("changed state to 1");
     }
   }
   else if(roomState == 1){ //Currently occupied
-    if(distanceTrip){
+    if(distanceTriggered){
       roomState = 0;
       Serial.println("changed state to 0");
     }
@@ -149,10 +150,8 @@ bool distanceTrip(int distance){
     currentDistanceSleepTime = 0;
   }
 
-  if(currentDistanceSleepTime != 0 && distance != -1 && (distance < lowThreshDistance || distance > highThreshDistance)){
-      if(currentDistanceSleepTime == 0){
-        trigger = true;
-      }
+  if(currentDistanceSleepTime == 0 && (distance < lowThreshDistance || distance > highThreshDistance)){
+    trigger = true;
   }
 
   if(currentDistanceSleepTime != 0 || trigger){
