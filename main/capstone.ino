@@ -15,6 +15,21 @@ int ledPin = D7;
 int basicDelay = 150;
 bool activeMotion = false;
 char pirState = LOW;
+int suspectTimeThreshold = 5000; // in MS
+int suspectTimePassed = 0;
+
+//App settings
+int lowThreshDistance;
+int highThreshDistance;
+
+//Debug evaluator
+int count = 0;
+
+//state
+// Empty = 0, Occupied = 1, SuspectedEmpty = 2
+int roomtState = 0;
+bool calibrationMode;
+int calibrationCount;
 
 void setup() {
     //Generic setup
@@ -27,6 +42,9 @@ void setup() {
     //motion sensor setup
     pinMode(motionPin, INPUT);
     pinMode(ledPin, OUTPUT);
+
+    calibrationMode = true;
+    calibrationCount = 0;
 }
 
 void loop(){
@@ -35,35 +53,79 @@ void loop(){
     distance = DistanceCheck(trigPin, echoPin);
     bool motion;
     motion = MotionCheck(motionPin, ledPin);
+    Serial.println(String(count) + "|" + String(distance));
 
-    evaluate(distance, motion);
+
+    if(calibrationMode){
+      calibrate(distance);
+
+    }
+    else{
+      evaluate(distance, motion);
+    }
+
     delay(basicDelay);
 }
 
-void evaluate(long distance, bool motion){
-  Serial.println(distance);
+void calibrate(int distance){
+    if(distance == -1){
+        return;
+    }
+    if(count==0){
+      lowThreshDistance = distance;
+      highThreshDistance = distance;
+    }
+    if(lowThreshDistance> distance){
+      lowThreshDistance = distance;
+    }
+    if(highThreshDistance< distance){
+      highThreshDistance = distance;
+    }
 
-  if (motion) {
-      // check if the input is HIGH
-      digitalWrite(ledPin, HIGH);  // turn LED ON
-      if (pirState == LOW) {
-          // we have just turned on
-          Serial.println("Motion detected!");
-          // We only want to print on the output change, not state
-          pirState = HIGH;
-      }
-  }
-  else {
-      digitalWrite(ledPin, LOW); // turn LED OFF
-      if (pirState == HIGH){
-          // we have just turned of
-          Serial.println("Motion ended!");
-          // We only want to print on the output change, not state
-          pirState = LOW;
-      }
-  }
+    count++;
+    if(count >= 15){
+      lowThreshDistance = lowThreshDistance - 10;
+      highThreshDistance = highThreshDistance + 10;
+      calibrationMode = false;
+    }
 
 }
+
+void evaluate(long distance, bool motion){
+  Serial.println(String(lowThreshDistance) + "|" + String(highThreshDistance)+"|" + String(distance));
+
+ if(roomtState == 0){ //currenlty empty
+
+ }
+ else if(roomtState == 1){ //Currently occupied
+
+ }
+ else{ //we suspect it's empty
+
+ }
+
+  // if (motion) {
+  //     // check if the input is HIGH
+  //     digitalWrite(ledPin, HIGH);  // turn LED ON
+  //     if (pirState == LOW) {
+  //         // we have just turned on
+  //         Serial.println("Motion detected!");
+  //         // We only want to print on the output change, not state
+  //         pirState = HIGH;
+  //     }
+  // }
+  // else {
+  //     digitalWrite(ledPin, LOW); // turn LED OFF
+  //     if (pirState == HIGH){
+  //         // we have just turned of
+  //         Serial.println("Motion ended!");
+  //         // We only want to print on the output change, not state
+  //         pirState = LOW;
+  //     }
+  // }
+
+}
+
 
 long DistanceCheck(int trigPin, int echoPin){
     long duration, distance;
