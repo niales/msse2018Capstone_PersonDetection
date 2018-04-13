@@ -22,12 +22,16 @@ int suspectTimePassed = 0;
 int lowThreshDistance;
 int highThreshDistance;
 
+int distanceSleepDelay = 3000;
+int currentDistanceSleepTime = 0;
+bool isInDistanceSleep = false;
+
 //Debug evaluator
 int count = 0;
 
 //state
 // Empty = 0, Occupied = 1, SuspectedEmpty = 2
-int roomtState = 0;
+int roomState = 0;
 bool calibrationMode;
 int calibrationCount;
 
@@ -53,7 +57,6 @@ void loop(){
     distance = DistanceCheck(trigPin, echoPin);
     bool motion;
     motion = MotionCheck(motionPin, ledPin);
-    Serial.println(String(count) + "|" + String(distance));
 
 
     if(calibrationMode){
@@ -62,6 +65,13 @@ void loop(){
     }
     else{
       evaluate(distance, motion);
+
+      if(roomState==1 || roomState==2){
+        digitalWrite(ledPin, HIGH);
+      }
+      else{
+        digitalWrite(ledPin, LOW);
+      }
     }
 
     delay(basicDelay);
@@ -93,16 +103,21 @@ void calibrate(int distance){
 
 void evaluate(long distance, bool motion){
   Serial.println(String(lowThreshDistance) + "|" + String(highThreshDistance)+"|" + String(distance));
+  bool distanceTriggered = distanceTrip(distance);
 
- if(roomtState == 0){ //currenlty empty
+  if(roomState == 0){ //currenlty empty
+    if(distanceTrip){
+      roomState = 1;
+    }
+  }
+  else if(roomState == 1){ //Currently occupied
+    if(distanceTrip){
+      roomState = 0;
+    }
+  }
+  else{ //we suspect it's empty
 
- }
- else if(roomtState == 1){ //Currently occupied
-
- }
- else{ //we suspect it's empty
-
- }
+  }
 
   // if (motion) {
   //     // check if the input is HIGH
@@ -126,6 +141,24 @@ void evaluate(long distance, bool motion){
 
 }
 
+bool distanceTrip(int distance){
+  bool trigger = false;
+  if(currentDistanceSleepTime > distanceSleepDelay){
+    currentDistanceSleepTime = 0;
+  }
+
+  if(distance != -1 && (distance < lowThreshDistance || distance > highThreshDistance)){
+      if(currentDistanceSleepTime == 0){
+        trigger = true;
+      }
+  }
+
+  if(currentDistanceSleepTime != 0 || trigger){
+    currentDistanceSleepTime = currentDistanceSleepTime + basicDelay;
+  }
+
+  return trigger;
+}
 
 long DistanceCheck(int trigPin, int echoPin){
     long duration, distance;
