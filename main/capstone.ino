@@ -108,11 +108,13 @@ void evaluate(long distance, bool motion){
   if(roomState == 0){ //currenlty empty
     if(distanceTrip){
       roomState = 1;
+      Serial.println("changed state to 1");
     }
   }
   else if(roomState == 1){ //Currently occupied
     if(distanceTrip){
       roomState = 0;
+      Serial.println("changed state to 0");
     }
   }
   else{ //we suspect it's empty
@@ -147,7 +149,7 @@ bool distanceTrip(int distance){
     currentDistanceSleepTime = 0;
   }
 
-  if(distance != -1 && (distance < lowThreshDistance || distance > highThreshDistance)){
+  if(currentDistanceSleepTime != 0 && distance != -1 && (distance < lowThreshDistance || distance > highThreshDistance)){
       if(currentDistanceSleepTime == 0){
         trigger = true;
       }
