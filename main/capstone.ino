@@ -1,6 +1,7 @@
 //#include "support/distance_sensor.ino";
 //#include "support/motion_sensor.cpp";
 
+
 //Distance pins
 //the trigger pin sends out an ultrasonic pulse
 int trigPin = A0;
@@ -58,7 +59,7 @@ void loop(){
     bool motion;
     motion = MotionCheck(motionPin, ledPin);
 
-    Serial.println("Low: " + String(lowThreshDistance) + " | High: " + String(highThreshDistance)+" | Dist: " + String(distance) + " | RoomState: " + String(roomState));
+    Serial.println("Low: " + String(lowThreshDistance) + " | High: " + String(highThreshDistance)+" | D: " + String(distance) + " M: " + String(motion) + " | RS: " + String(roomState) + " | time: " + millis());
 
     if(calibrationMode){
       calibrate(distance);
@@ -109,17 +110,22 @@ void evaluate(long distance, bool motion){
   if(roomState == 0){ //currently empty
     if(distanceTriggered){
       roomState = 1;
-      Serial.println("changed state to 1");
+      Serial.println("distance detected - changed state to 1");
+    }
+    if(motion){
+      roomState = 1;
+      Serial.println("motion detected - changed state to 1");
     }
   }
   else if(roomState == 1){ //Currently occupied
     if(distanceTriggered){
-      roomState = 0;
-      Serial.println("changed state to 0");
+      roomState = 2;
+      Serial.println("distance detected - changed state to 2");
     }
   }
-  else{ //we suspect it's empty
-
+  else if (roomState == 2 && motion){ //we suspect it's empty
+    roomState = 1;
+    Serial.println("motion detected - changed state to 1");
   }
 
   // if (motion) {
