@@ -13,7 +13,7 @@ int motionPin = D4;
 int ledPin = D7;
 
 //For this file
-int basicDelay = 150;
+int basicDelay = 150; // in MS
 bool activeMotion = false;
 char pirState = LOW;
 int suspectTimeThreshold = 5000; // in MS
@@ -23,12 +23,16 @@ int suspectTimePassed = 0;
 int lowThreshDistance;
 int highThreshDistance;
 
-int distanceSleepDelay = 3000;
+int distanceSleepDelay = 3000; // in MS
 int currentDistanceSleepTime = 0;
 bool isInDistanceSleep = false;
 
-//Debug evaluator
-int count = 0;
+int motionSleepDelay = 7000; // in MS
+int currentMotionSleepTime = 0;
+bool isInMotionSleep = false;
+
+int suspectedEmptyThreshold = 15000; // in MS
+int currentSuspectedEmptyTime = 0;
 
 //state
 // Empty = 0, Occupied = 1, SuspectedEmpty = 2
@@ -59,8 +63,6 @@ void loop(){
     bool motion;
     motion = MotionCheck(motionPin, ledPin);
 
-    Serial.println("Low: " + String(lowThreshDistance) + " | High: " + String(highThreshDistance)+" | D: " + String(distance) + " M: " + String(motion) + " | RS: " + String(roomState) + " | time: " + millis());
-
     if(calibrationMode){
       calibrate(distance);
 
@@ -83,7 +85,7 @@ void calibrate(int distance){
     if(distance == -1){
         return;
     }
-    if(count==0){
+    if(calibrationCount==0){
       lowThreshDistance = distance;
       highThreshDistance = distance;
     }
@@ -94,25 +96,28 @@ void calibrate(int distance){
       highThreshDistance = distance;
     }
 
-    count++;
-    if(count >= 15){
+    calibrationCount++;
+    if(calibrationCount >= 15){
       lowThreshDistance = lowThreshDistance - 10;
       highThreshDistance = highThreshDistance + 10;
       calibrationMode = false;
     }
-
 }
 
 void evaluate(long distance, bool motion){
 
   bool distanceTriggered = distanceTrip(distance);
+  bool motionCalculated = motionTrip(motion);
+  bool emptyTriggered = false;
+
+  Serial.println("Low: " + String(lowThreshDistance) + " | High: " + String(highThreshDistance)+" | D: " + String(distance) + " M: " + String(motionCalculated) + " | RS: " + String(roomState) + " | time: " + millis());
 
   if(roomState == 0){ //currently empty
     if(distanceTriggered){
       roomState = 1;
       Serial.println("distance detected - changed state to 1");
     }
-    if(motion){
+    if(motionCalculated){
       roomState = 1;
       Serial.println("motion detected - changed state to 1");
     }
@@ -123,9 +128,14 @@ void evaluate(long distance, bool motion){
       Serial.println("distance detected - changed state to 2");
     }
   }
-  else if (roomState == 2 && motion){ //we suspect it's empty
-    roomState = 1;
-    Serial.println("motion detected - changed state to 1");
+  else if (roomState == 2){ //we suspect it's empty
+    if (motionCalculated){
+      roomState = 1;
+      Serial.println("motion detected - changed state to 1");
+    }
+    else{
+      emptyTriggered = suspectedEmptyCheck();
+    }
   }
 
   // if (motion) {
@@ -148,6 +158,32 @@ void evaluate(long distance, bool motion){
   //     }
   // }
 
+}
+
+bool suspectedEmptyCheck() {
+  if (currentSuspectedEmptyTime > suspectedEmptyThreshold){
+    currentSuspectedEmptyTime = 0;
+    roomState = 0;
+    Serial.println("no motion detected - changed state to 0");
+  }
+  currentSuspectedEmptyTime = currentSuspectedEmptyTime + basicDelay;
+}
+
+bool motionTrip(bool motion){
+  bool trigger = false;
+  if (currentMotionSleepTime > motionSleepDelay){
+    currentMotionSleepTime = 0;
+  }
+
+  if (currentMotionSleepTime == 0 && motion){
+    trigger = true;
+  }
+
+  if (currentMotionSleepTime != 0 || trigger){
+    currentMotionSleepTime = currentMotionSleepTime + basicDelay;
+  }
+
+  return trigger;
 }
 
 bool distanceTrip(int distance){
@@ -182,6 +218,8 @@ long DistanceCheck(int trigPin, int echoPin){
     distance = (duration/2) * 0.0343;
     if (distance >= 500 || distance <=0) {
       distance = -1;
+      // much longer wait if no signal is detected, around 134 ms extra
+      // as of 4/13/2018, average loop time when signal detected 164ms, vs. no signal 300ms
     }
 
     return (distance);
