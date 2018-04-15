@@ -39,6 +39,7 @@ int currentSuspectedEmptyTime = 0;
 int roomState = 0;
 bool calibrationMode;
 int calibrationCount;
+int ledStatus; // 0 = OFF, 1 = ON
 
 void setup() {
     //Generic setup
@@ -71,10 +72,22 @@ void loop(){
       evaluate(distance, motion);
 
       if(roomState==1 || roomState==2){
-        digitalWrite(ledPin, HIGH);
+          if (ledStatus == 0)
+          {
+            digitalWrite(ledPin, HIGH);
+            ledStatus = 1;
+            Particle.publish("Utility_On_Off", String("ON"), PRIVATE);
+            Serial.println("Utility_On_Off - ON");
+          }
       }
       else{
-        digitalWrite(ledPin, LOW);
+          if (ledStatus == 1)
+          {
+            digitalWrite(ledPin, LOW);
+            ledStatus = 0;
+            Particle.publish("Utility_On_Off", String("OFF"), PRIVATE);
+            Serial.println("Utility_On_Off - OFF");
+          }
       }
     }
 
