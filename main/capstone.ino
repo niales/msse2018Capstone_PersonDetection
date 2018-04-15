@@ -188,16 +188,19 @@ bool motionTrip(bool motion){
 
 bool distanceTrip(int distance){
   bool trigger = false;
-  if(currentDistanceSleepTime > distanceSleepDelay){
-    currentDistanceSleepTime = 0;
-  }
+  if (distance != -1)
+      {
+      if(currentDistanceSleepTime > distanceSleepDelay){
+        currentDistanceSleepTime = 0;
+      }
 
-  if(currentDistanceSleepTime == 0 && (distance < lowThreshDistance || distance > highThreshDistance)){
-    trigger = true;
-  }
+      if(currentDistanceSleepTime == 0 && (distance < lowThreshDistance || distance > highThreshDistance)){
+        trigger = true;
+      }
 
-  if(currentDistanceSleepTime != 0 || trigger){
-    currentDistanceSleepTime = currentDistanceSleepTime + basicDelay;
+      if(currentDistanceSleepTime != 0 || trigger){
+        currentDistanceSleepTime = currentDistanceSleepTime + basicDelay;
+      }
   }
 
   return trigger;
