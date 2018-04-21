@@ -76,8 +76,8 @@ void loop(){
           {
             digitalWrite(ledPin, HIGH);
             ledStatus = 1;
-            Particle.publish("Utility_On_Off", String("ON"), PRIVATE);
-            Serial.println("Utility_On_Off - ON");
+            Particle.publish("Utility_On", String("ON"), PRIVATE);
+            Serial.println("Utility_On");
           }
       }
       else{
@@ -85,9 +85,14 @@ void loop(){
           {
             digitalWrite(ledPin, LOW);
             ledStatus = 0;
-            Particle.publish("Utility_On_Off", String("OFF"), PRIVATE);
-            Serial.println("Utility_On_Off - OFF");
+            Particle.publish("Utility_Off", String("OFF"), PRIVATE);
+            Serial.println("Utility_Off");
           }
+      }
+
+      //If we're in status 2 blink!
+      if(ledStatus == 1 && roomState == 2){
+        digitalWrite(ledPin, !digitalRead(ledPin));
       }
     }
 
@@ -126,13 +131,9 @@ void evaluate(long distance, bool motion){
   Serial.println("Low: " + String(lowThreshDistance) + " | High: " + String(highThreshDistance)+" | D: " + String(distance) + " M: " + String(motionCalculated) + " | RS: " + String(roomState) + " | time: " + millis());
 
   if(roomState == 0){ //currently empty
-    if(distanceTriggered){
+    if(distanceTriggered || motionCalculated){
       roomState = 1;
       Serial.println("distance detected - changed state to 1");
-    }
-    if(motionCalculated){
-      roomState = 1;
-      Serial.println("motion detected - changed state to 1");
     }
   }
   else if(roomState == 1){ //Currently occupied
